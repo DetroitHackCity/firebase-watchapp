@@ -13,6 +13,7 @@
   "appKeys": {
     "dir": 0
   },
+  "capabilities": ["health"],
   "resources": {
     "media": []
   }

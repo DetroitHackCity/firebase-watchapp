@@ -36,6 +36,23 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   text_layer_set_text(text_layer, "Select");
+
+
+  // Begin dictionary
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+
+  int step_count = 0;
+  if(HealthServiceAccessibilityMaskAvailable & health_service_metric_accessible(HealthMetricStepCount, 
+    time_start_of_today(), time(NULL))) {
+    step_count = health_service_sum_today(HealthMetricStepCount);
+  } 
+
+  // Add a key-value pair
+  dict_write_int32(iter, KEY_DIR, step_count); // STEPS?!?!
+
+  // Send the message!
+  app_message_outbox_send();
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
