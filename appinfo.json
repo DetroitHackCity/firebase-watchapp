@@ -2,7 +2,7 @@
   "uuid": "4251414b-666b-463e-aaee-bd7d376cdbe5",
   "shortName": "firebase-watchapp",
   "longName": "firebase-watchapp",
-  "companyName": "MakeAwesomeHappen",
+  "companyName": "Detroit Hack City",
   "versionLabel": "1.0",
   "sdkVersion": "3",
   "targetPlatforms": ["aplite", "basalt", "chalk"],
@@ -12,9 +12,11 @@
   },
   "appKeys": {
     "username": 0,
-    "steps": 1
+    "steps": 1,
+    "icon": 2,
+    "message": 3
   },
-  "capabilities": ["health"],
+  "capabilities": ["health", "configurable"],
   "resources": {
     "media": []
   }

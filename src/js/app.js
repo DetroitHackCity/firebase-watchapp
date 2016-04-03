@@ -1,6 +1,10 @@
 
 require('firebase_lib');
 
+var Clay = require('clay');
+var clayConfig = require('config.json');
+var clay = new Clay(clayConfig);
+
 function firebaseCall(username, steps) {
 	var myDataRef = new Firebase('https://nk6bl51k7ig.firebaseio-demo.com/');
 	myDataRef.push({name: username, text: steps});

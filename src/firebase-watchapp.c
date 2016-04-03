@@ -7,6 +7,8 @@
 // persistent storage keys
 #define STORAGE_VERSION_CODE_KEY 1
 #define STORAGE_NAME_KEY 2
+#define STORAGE_ICON_KEY 3
+#define STORAGE_MESSAGE_KEY 4
 
 
 static Window *window;
@@ -17,10 +19,41 @@ static char s_buffer[64];
 // persistent storage version (i.e. app version at last write)
 static int s_storage_version_code = 0;
 static char s_username[64];
+static int s_icon = 0;
+static char s_message[256];
 
+// declare appKeys from appinfo.json
+typedef enum {
+  username = 0,
+  steps = 1,
+  icon = 2,
+  message = 3
+} AppKey;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
+
+  // read username
+  Tuple *username_t = dict_find(iterator, username);
+  if(username_t) {
+    snprintf(s_username, sizeof(s_username), username_t->value->cstring);
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_username);
+
+  // read icon
+  Tuple *icon_t = dict_find(iterator, icon);
+  if(icon_t) {
+    s_icon = icon_t->value->int32;
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "s_icon: %d ", s_icon);
+
+  // read message
+  Tuple *message_t = dict_find(iterator, message);
+  if(message_t) {
+    snprintf(s_message, sizeof(s_message), message_t->value->cstring);
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_message);
+
 
   // TODO
   /*
@@ -123,10 +156,10 @@ static void window_unload(Window *window) {
 
 static void init(void) {
   int username_read_result = 0;
+  int message_read_result = 0;
 
   // get initial storage version, or set to 0 if none
   s_storage_version_code = persist_exists(STORAGE_VERSION_CODE_KEY) ? persist_read_int(STORAGE_VERSION_CODE_KEY) : 0;
-  s_storage_version_code = 1;
   APP_LOG(APP_LOG_LEVEL_DEBUG, "s_storage_version_code: %d ", s_storage_version_code);
 
   // get username if set
@@ -142,8 +175,27 @@ static void init(void) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "!persist_exists");
   }
 
-  snprintf(s_username, sizeof(s_username), "ishotjr");
   APP_LOG(APP_LOG_LEVEL_DEBUG, s_username);
+
+  // get icon, or set to 0 if none
+  s_icon = persist_exists(STORAGE_ICON_KEY) ? persist_read_int(STORAGE_ICON_KEY) : 0;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "s_icon: %d ", s_icon);
+
+  // get message if set
+  if (persist_exists(STORAGE_MESSAGE_KEY)) {
+    // TODO: handle return value etc. ?
+    message_read_result = persist_read_string(STORAGE_MESSAGE_KEY, s_message, sizeof(s_message));
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "persist_exists; persist_read_string() result %d ", message_read_result);
+
+  } else {
+    snprintf(s_message, sizeof(s_message), "no message");
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "!persist_exists");
+  }
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_message);
+
 
   
   // Register callbacks
@@ -169,14 +221,22 @@ static void init(void) {
 
 static void deinit(void) {
   int username_write_result = 0;
+  int message_write_result = 0;
 
-  // persist storage version and username between launches
+  // persist storage version, username, icon, message between launches
   persist_write_int(STORAGE_VERSION_CODE_KEY, s_storage_version_code);
 
   username_write_result = persist_write_string(STORAGE_NAME_KEY, s_username);
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "persist_write_string() result %d ", username_write_result);
   APP_LOG(APP_LOG_LEVEL_DEBUG, s_username);
+
+  persist_write_int(STORAGE_ICON_KEY, s_icon);
+
+  message_write_result = persist_write_string(STORAGE_MESSAGE_KEY, s_message);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "persist_write_string() result %d ", message_write_result);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_message);
 
   window_destroy(window);
 }
