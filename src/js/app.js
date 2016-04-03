@@ -1,9 +1,9 @@
 
 require('firebase_lib');
 
-function firebaseCall(value) {
+function firebaseCall(username, steps) {
 	var myDataRef = new Firebase('https://nk6bl51k7ig.firebaseio-demo.com/');
-	myDataRef.push({name: value, text: value});
+	myDataRef.push({name: username, text: steps});
 }
 
 // Listen for when the watchface is opened
@@ -21,6 +21,6 @@ Pebble.addEventListener('appmessage',
 		var dict = e.payload;
 		console.log('Got message: ' + JSON.stringify(dict));
 
-		firebaseCall(e.payload.dir);
+		firebaseCall(e.payload.username, e.payload.steps);
 	}                     
 );

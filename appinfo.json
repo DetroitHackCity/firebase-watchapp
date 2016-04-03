@@ -11,7 +11,8 @@
     "watchface": false
   },
   "appKeys": {
-    "dir": 0
+    "username": 0,
+    "steps": 1
   },
   "capabilities": ["health"],
   "resources": {

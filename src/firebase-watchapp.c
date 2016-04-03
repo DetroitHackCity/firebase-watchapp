@@ -1,7 +1,12 @@
 #include <pebble.h>
 
 
-#define KEY_DIR 0
+#define KEY_USERNAME 0
+#define KEY_STEPS 1
+
+// persistent storage keys
+#define STORAGE_VERSION_CODE_KEY 1
+#define STORAGE_NAME_KEY 2
 
 
 static Window *window;
@@ -9,15 +14,23 @@ static TextLayer *text_layer;
 
 static char s_buffer[64];
 
+// persistent storage version (i.e. app version at last write)
+static int s_storage_version_code = 0;
+static char s_username[64];
+
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
 
+  // TODO
+  /*
   // Get the first pair
   Tuple *data = dict_find(iterator, KEY_DIR);
   if (data) {
     snprintf(s_buffer, sizeof(s_buffer), "Received '%d'", data->value->uint8);
     text_layer_set_text(text_layer, s_buffer);
   }  
+  */
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -49,7 +62,8 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   } 
 
   // Add a key-value pair
-  dict_write_int32(iter, KEY_DIR, step_count); // STEPS?!?!
+  dict_write_cstring(iter, KEY_USERNAME, s_username);
+  dict_write_int32(iter, KEY_STEPS, step_count); // STEPS?!?!
 
   // Send the message!
   app_message_outbox_send();
@@ -64,7 +78,8 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   app_message_outbox_begin(&iter);
 
   // Add a key-value pair
-  dict_write_uint8(iter, KEY_DIR, 1); // UP
+  dict_write_cstring(iter, KEY_USERNAME, s_username);
+  dict_write_uint8(iter, KEY_STEPS, 1); // UP
 
   // Send the message!
   app_message_outbox_send();
@@ -79,7 +94,8 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   app_message_outbox_begin(&iter);
 
   // Add a key-value pair
-  dict_write_uint8(iter, KEY_DIR, 0); // DOWN
+  dict_write_cstring(iter, KEY_USERNAME, s_username);
+  dict_write_uint8(iter, KEY_STEPS, 0); // DOWN
 
   // Send the message!
   app_message_outbox_send();
@@ -106,6 +122,30 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
+  int username_read_result = 0;
+
+  // get initial storage version, or set to 0 if none
+  s_storage_version_code = persist_exists(STORAGE_VERSION_CODE_KEY) ? persist_read_int(STORAGE_VERSION_CODE_KEY) : 0;
+  s_storage_version_code = 1;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "s_storage_version_code: %d ", s_storage_version_code);
+
+  // get username if set
+  if (persist_exists(STORAGE_NAME_KEY)) {
+    // TODO: handle return value etc. ?
+    username_read_result = persist_read_string(STORAGE_NAME_KEY, s_username, sizeof(s_username));
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "persist_exists; persist_read_string() result %d ", username_read_result);
+
+  } else {
+    snprintf(s_username, sizeof(s_username), "unknown");
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "!persist_exists");
+  }
+
+  snprintf(s_username, sizeof(s_username), "ishotjr");
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_username);
+
+  
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
@@ -128,6 +168,16 @@ static void init(void) {
 }
 
 static void deinit(void) {
+  int username_write_result = 0;
+
+  // persist storage version and username between launches
+  persist_write_int(STORAGE_VERSION_CODE_KEY, s_storage_version_code);
+
+  username_write_result = persist_write_string(STORAGE_NAME_KEY, s_username);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "persist_write_string() result %d ", username_write_result);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, s_username);
+
   window_destroy(window);
 }
 
